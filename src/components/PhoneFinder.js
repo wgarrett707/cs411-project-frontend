@@ -4,7 +4,6 @@ import { fetchData, apiQueries } from '../services/api';
 
 const PhoneFinder = () => {
   const [phones, setPhones] = useState([]);
-  const [filteredPhones, setFilteredPhones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -16,67 +15,28 @@ const PhoneFinder = () => {
     minRam: ''
   });
 
+  // Initially load phones
   useEffect(() => {
-    loadPhones();
+    loadPhones(filters);
   }, []);
 
+  // Call API whenever filters change
   useEffect(() => {
-    applyFilters();
-  }, [phones, filters]);
+    loadPhones(filters);
+  }, [filters]);
 
-  const loadPhones = async () => {
+  const loadPhones = async (filtersParam) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchData(apiQueries.SPECS);
-      setPhones(data);
+      // Pass filters as query parameters along with the query type
+      const response = await fetchData(apiQueries.SPECS, filtersParam);
+      setPhones(response);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  };
-
-  const applyFilters = () => {
-    let filtered = [...phones];
-
-    if (filters.brand) {
-      filtered = filtered.filter(phone => 
-        phone.BrandName?.toLowerCase().includes(filters.brand.toLowerCase())
-      );
-    }
-
-    if (filters.minPrice) {
-      filtered = filtered.filter(phone => 
-        phone.Price >= parseFloat(filters.minPrice)
-      );
-    }
-
-    if (filters.maxPrice) {
-      filtered = filtered.filter(phone => 
-        phone.Price <= parseFloat(filters.maxPrice)
-      );
-    }
-
-    if (filters.minRating) {
-      filtered = filtered.filter(phone => 
-        phone.Rating >= parseFloat(filters.minRating)
-      );
-    }
-
-    if (filters.minStorage) {
-      filtered = filtered.filter(phone => 
-        phone.Storage >= parseInt(filters.minStorage)
-      );
-    }
-
-    if (filters.minRam) {
-      filtered = filtered.filter(phone => 
-        phone.RAM >= parseInt(filters.minRam)
-      );
-    }
-
-    setFilteredPhones(filtered);
   };
 
   const handleFilterChange = (field, value) => {
@@ -189,7 +149,7 @@ const PhoneFinder = () => {
             <button className="btn btn-secondary" onClick={clearFilters} style={{ marginRight: '10px' }}>
               Clear Filters
             </button>
-            <button className="btn btn-primary" onClick={loadPhones}>
+            <button className="btn btn-primary" onClick={() => loadPhones(filters)}>
               <Search style={{ marginRight: '8px', width: '16px', height: '16px' }} />
               Refresh Results
             </button>
@@ -209,16 +169,16 @@ const PhoneFinder = () => {
           </div>
         ) : (
           <div className="section">
-            <h2>Results ({filteredPhones.length} phones found)</h2>
+            <h2>Results ({phones.length} phones found)</h2>
             
-            {filteredPhones.length === 0 ? (
+            {phones.length === 0 ? (
               <div className="card" style={{ textAlign: 'center', color: '#64748b' }}>
                 <Smartphone style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }} />
                 <p>No phones found matching your criteria. Try adjusting your filters.</p>
               </div>
             ) : (
               <div className="grid grid-2">
-                {filteredPhones.map((phone, index) => (
+                {phones.map((phone, index) => (
                   <div key={index} className="card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                       <div>
@@ -267,4 +227,4 @@ const PhoneFinder = () => {
   );
 };
 
-export default PhoneFinder; 
+export default PhoneFinder;
